@@ -15,17 +15,36 @@ java {
 }
 
 repositories {
-	mavenCentral()
+    mavenCentral()
+}
+
+configurations {
+    // Configuration to resolve the OpenTelemetry Java agent artifact
+    otelAgent
 }
 
 dependencies {
-	implementation 'org.springframework.boot:spring-boot-starter-actuator'
-	implementation 'org.springframework.boot:spring-boot-starter-web'
-	implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
-	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
+    implementation 'io.opentelemetry:opentelemetry-api:1.58.0'
+    // Pin OpenTelemetry Java agent
+    otelAgent 'io.opentelemetry.javaagent:opentelemetry-javaagent:2.24.0'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+    useJUnitPlatform()
+}
+
+// Automatically run with the OpenTelemetry Java agent and config file (resolved via Gradle)
+tasks.named('bootRun') {
+    doFirst {
+        def agent = configurations.otelAgent.singleFile
+        jvmArgs(
+            "-javaagent:${agent}",
+            "-Dotel.javaagent.configuration-file=otel.properties"
+        )
+    }
 }
