@@ -8,9 +8,6 @@
             <includeNonStructuredArguments>false</includeNonStructuredArguments>
             <includeContext>false</includeContext>
             <customFields>{"service":"${spring.application.name:-otel-demo}"}</customFields>
-            <fieldNames>
-                <tags>[ignore]</tags>
-            </fieldNames>
         </encoder>
     </appender>
 
