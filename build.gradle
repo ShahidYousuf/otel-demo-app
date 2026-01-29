@@ -23,6 +23,26 @@ configurations {
     otelAgent
 }
 
+// Utility to load key=value pairs from project .env for local runs
+def loadDotenv() {
+    def envFile = file('.env')
+    if (!envFile.exists()) return [:]
+    def map = [:]
+    envFile.eachLine { String line ->
+        def l = line.trim()
+        if (!l || l.startsWith('#')) return
+        def idx = l.indexOf('=')
+        if (idx < 0) return
+        def key = l.substring(0, idx).trim()
+        def val = l.substring(idx + 1).trim()
+        if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+            val = val.substring(1, val.length() - 1)
+        }
+        map[key] = val
+    }
+    return map
+}
+
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-web'
@@ -41,6 +61,8 @@ tasks.named('test') {
 
 // Automatically run with the OpenTelemetry Java agent and config file (resolved via Gradle)
 tasks.named('bootRun') {
+    // Provide env vars from .env to the app process so the Java agent (OTEL_*) can read them
+    environment loadDotenv()
     doFirst {
         def agent = configurations.otelAgent.singleFile
         jvmArgs(
