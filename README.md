@@ -75,6 +75,48 @@ Grafana queries (examples)
 Span metrics vs app metrics
 - Grafana may show `traces_spanmetrics_*` (derived from traces). These are separate from app metrics. Use label filters like `service="otel-demo"` and `endpoint="/work"` to focus on Micrometer meters.
 
+## Logs via Alloy (recommended)
+
+Use Grafana Alloy as a single OTLP receiver to accept logs from the OpenTelemetry Java agent and forward them to Grafana Cloud Loki.
+
+1) Configure credentials in `.env`
+
+```
+# Loki credentials (Grafana Cloud)
+LOKI_URL=https://logs-prod-<region>.grafana.net/loki/api/v1/push
+LOKI_USERNAME=<numeric instance id>
+LOKI_PASSWORD=<glc_ token with logs:write>
+
+# Enable OTLP logs for the Java agent and point to Alloy locally
+OTEL_LOGS_EXPORTER=otlp
+OTEL_EXPORTER_OTLP_LOGS_ENDPOINT=http://localhost:4318/v1/logs
+```
+
+2) Start Alloy locally
+
+```
+docker run -d --name alloy -p 4318:4318 \
+  -v $(pwd)/ops/alloy.river:/etc/alloy/config.alloy:ro \
+  -e LOKI_URL -e LOKI_USERNAME -e LOKI_PASSWORD \
+  grafana/alloy:latest run --server.http.listen-addr=0.0.0.0:12345 /etc/alloy/config.alloy
+```
+
+3) Start the app
+
+```
+./gradlew bootRun
+```
+
+The build injects `.env` into the BootRun environment so the OTel agent sees `OTEL_*` vars and exports logs to Alloy (which forwards them to Loki).
+
+4) Verify in Grafana
+- Explore → Logs → filter `service="otel-demo"`.
+- Logs include `trace_id` and `span_id` for click-through trace correlation.
+
+Notes
+- `otel.properties` keeps agent metrics disabled and traces enabled; logs are enabled via `OTEL_LOGS_EXPORTER=otlp` in `.env`.
+- Ensure your token has logs:write and your region/host matches your stack.
+
 ## Configuration notes
 - `application.properties` imports `.env` via Spring ConfigData: `spring.config.import=optional:file:.env[.properties]`.
 - Keep secrets (tokens/headers) only in `.env`.
@@ -86,4 +128,3 @@ Span metrics vs app metrics
 - 404 from OTLP metrics: ensure URL includes `/otlp/v1/metrics` for Micrometer.
 - No app metrics in Grafana: make requests to `/hello` and `/work?ms=250`; wait at least one export step.
 - Still stuck? Set `logging.level.io.micrometer.registry.otlp=DEBUG` temporarily to inspect publish attempts.
-

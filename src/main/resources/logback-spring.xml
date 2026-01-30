@@ -11,11 +11,30 @@
         </encoder>
     </appender>
 
+    <!-- Optional: JSON file appender for local shipping with Promtail -->
+    <appender name="JSON_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/otel-demo/otel-demo.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <timeZone>UTC</timeZone>
+            <includeMdcKeyName>trace_id</includeMdcKeyName>
+            <includeMdcKeyName>span_id</includeMdcKeyName>
+            <includeStructuredArguments>true</includeStructuredArguments>
+            <includeNonStructuredArguments>false</includeNonStructuredArguments>
+            <includeContext>false</includeContext>
+            <customFields>{"service":"${spring.application.name:-otel-demo}"}</customFields>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>logs/otel-demo/otel-demo.%d{yyyy-MM-dd}.log.gz</fileNamePattern>
+            <maxHistory>7</maxHistory>
+        </rollingPolicy>
+    </appender>
+
     <logger name="org.springframework" level="WARN"/>
     <logger name="org.apache" level="WARN"/>
     <logger name="org.springframework.web" level="INFO"/>
 
     <root level="INFO">
         <appender-ref ref="JSON_CONSOLE"/>
+        <appender-ref ref="JSON_FILE"/>
     </root>
 </configuration>
