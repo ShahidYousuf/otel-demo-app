@@ -1,0 +1,23 @@
+version: "3.8"
+
+services:
+  alloy:
+    image: grafana/alloy:v1.8.0
+    container_name: alloy
+    restart: unless-stopped
+    ports:
+      - "4318:4318"   # OTLP HTTP receiver for logs
+      - "12345:12345"  # Alloy HTTP UI
+    environment:
+      - LOKI_URL=${LOKI_URL}
+      - LOKI_USERNAME=${LOKI_USERNAME}
+      - LOKI_PASSWORD=${LOKI_PASSWORD}
+    command: [
+      "run",
+      "--stability.level=experimental",
+      "--server.http.listen-addr=0.0.0.0:12345",
+      "/etc/alloy/config.alloy"
+    ]
+    volumes:
+      - ./ops/alloy.river:/etc/alloy/config.alloy:ro
+      - ./logs/otel-demo:/var/log/otel-demo:ro
