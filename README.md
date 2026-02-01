@@ -16,6 +16,31 @@ Package: `com.shahidyousuf.otel_demo`
   - Logs → Alloy OTLP receiver (HTTP :4318)
 - Grafana Alloy forwards logs to Grafana Cloud Loki using Basic auth.
 
+### Data Flow
+```
+   +------------------------------+                     +------------------------------+
+   | Spring Boot App              |                     | Grafana Cloud                 |
+   | service.name = otel-demo     |                     | - OTLP Gateway (Traces/Metrics)|
+   |                              |                     | - Loki (Logs)                 |
+   | - Logback JSON               |                     +------------------------------+
+   | - OpenTelemetry Java Agent   |                                   ^
+   +---------------+--------------+                                   |
+                   | OTLP logs (http/protobuf)                        | Loki push (HTTP)
+                   | endpoint: http://localhost:4318/v1/logs          | url: $LOKI_URL
+                   v                                                   |
+   +---------------+--------------+   Basic auth (username/token)      |
+   | Grafana Alloy                 +-----------------------------------+
+   | - otelcol.receiver.otlp :4318 |   https://logs-.../loki/api/v1/push
+   | - loki.write (basic_auth)     |
+   +---------------+--------------+
+                   ^
+                   |
+                   | OTLP traces + metrics (HTTP)
+                   | endpoint: https://otlp-gateway-<region>.grafana.net/otlp
+                   |   - Traces: /otlp
+                   |   - Metrics: /otlp/v1/metrics
+```
+
 Key files
 - `otel.properties` – agent exporters and settings
 - `ops/alloy.river` – Alloy pipeline (OTLP logs receiver → Loki write)
