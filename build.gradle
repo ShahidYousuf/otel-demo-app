@@ -46,6 +46,7 @@ def loadDotenv() {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-actuator'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
     implementation 'net.logstash.logback:logstash-logback-encoder:9.0'
     implementation 'io.opentelemetry:opentelemetry-api:1.58.0'
     implementation 'io.micrometer:micrometer-registry-otlp:1.14.3'
