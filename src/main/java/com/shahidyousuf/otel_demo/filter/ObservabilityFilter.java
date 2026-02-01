@@ -39,7 +39,7 @@ public class ObservabilityFilter extends OncePerRequestFilter {
         Context contextWithBaggage = baggage.storeInContext(Context.current());
 
         long startTime = System.currentTimeMillis();
-        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request);
+        ContentCachingRequestWrapper wrappedRequest = new ContentCachingRequestWrapper(request, 1024 * 1024);
         ContentCachingResponseWrapper wrappedResponse = new ContentCachingResponseWrapper(response);
 
         try (var scope = contextWithBaggage.makeCurrent()) {
